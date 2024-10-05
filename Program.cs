@@ -22,6 +22,13 @@ namespace MadLibsGame
             Console.Write("Select a theme: ");
             string selectedTheme = Console.ReadLine();
 
+            // Ensure the selected theme matches the available themes
+            if (!themes.Contains(selectedTheme))
+            {
+                Console.WriteLine($"Theme '{selectedTheme}' does not exist. Please select a valid theme.");
+                return; // Exit the program or re-prompt for a valid theme
+            }
+
             // Select a random story from the chosen theme
             var story = SelectRandomStory(stories, selectedTheme);
 
@@ -37,9 +44,9 @@ namespace MadLibsGame
         static void DisplayTitle(string title)
         {
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("╭" + new string('═', 58) + "╮");
-            Console.WriteLine("│" + title.PadLeft((60 + title.Length) / 2).PadRight(60) + "│");
-            Console.WriteLine("╰" + new string('═', 58) + "╯");
+            Console.WriteLine("╔" + new string('═', 58) + "╗");
+            Console.WriteLine("║" + title.PadLeft((60 + title.Length) / 2).PadRight(60) + "║");
+            Console.WriteLine("╚" + new string('═', 58) + "╝");
             Console.ResetColor();
         }
 
@@ -85,6 +92,7 @@ namespace MadLibsGame
 
         static dynamic SelectRandomStory(dynamic stories, string selectedTheme)
         {
+            // Check if the selected theme exists in the stories
             if (stories["themes"][selectedTheme] == null)
             {
                 throw new Exception($"Theme '{selectedTheme}' does not exist.");
