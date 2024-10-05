@@ -9,6 +9,9 @@ namespace MadLibsGame
     {
         static void Main(string[] args)
         {
+            // Handle CTRL+C gracefully
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(OnExit);
+
             // Display the title
             DisplayTitle("Mad Libs Game");
 
@@ -56,12 +59,29 @@ namespace MadLibsGame
             Console.ResetColor();
         }
 
+        static void OnExit(object sender, ConsoleCancelEventArgs e)
+        {
+            // Set the Cancel property to true to prevent the process from terminating.
+            e.Cancel = true;
+
+            // Display a message and perform any cleanup if necessary
+            Console.WriteLine("\nGame interrupted. Exiting gracefully...");
+            // You can add any additional cleanup code here if needed
+
+            // Exit the application
+            Environment.Exit(0);
+        }
+
         static void DisplayTitle(string title)
         {
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("╔" + new string('═', 58) + "╗");
-            Console.WriteLine("║" + title.PadLeft((60 + title.Length) / 2).PadRight(60) + "║");
-            Console.WriteLine("╚" + new string('═', 58) + "╝");
+            int totalWidth = 60; // Total width of the title box
+            int titleLength = title.Length;
+            int padding = (totalWidth - titleLength) / 2; // Calculate padding for centering
+
+            Console.WriteLine("╔" + new string('═', totalWidth - 2) + "╗");
+            Console.WriteLine("║" + new string(' ', padding) + title + new string(' ', totalWidth - titleLength - padding - 2) + "║");
+            Console.WriteLine("╚" + new string('═', totalWidth - 2) + "╝");
             Console.ResetColor();
         }
 
@@ -70,13 +90,13 @@ namespace MadLibsGame
             // Load and parse the JSON file
             string json = File.ReadAllText(path);
             var stories = JsonConvert.DeserializeObject<dynamic>(json);
-            
-            // Check if stories is null
+
+            // Check if stories or themes are null
             if (stories == null || stories["themes"] == null)
             {
                 throw new Exception("Failed to load stories from JSON.");
             }
-            
+
             return stories;
         }
 
@@ -92,11 +112,11 @@ namespace MadLibsGame
                 // Print the theme number in red
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.Write($"{index}. ");
-                
+
                 // Print the theme name in green
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine(theme.Name);
-                
+
                 themes.Add(theme.Name);
                 index++; // Increment the index for the next theme
             }
@@ -108,12 +128,17 @@ namespace MadLibsGame
         static dynamic SelectRandomStory(dynamic stories, string selectedTheme)
         {
             // Check if the selected theme exists in the stories
-            if (stories["themes"][selectedTheme] == null)
+            if (stories["themes"] == null || stories["themes"][selectedTheme] == null)
             {
                 throw new Exception($"Theme '{selectedTheme}' does not exist.");
             }
 
             var themeStories = stories["themes"][selectedTheme]["stories"];
+            if (themeStories == null || themeStories.Count == 0)
+            {
+                throw new Exception($"No stories found for theme '{selectedTheme}'.");
+            }
+
             Random random = new Random();
             int randomIndex = random.Next(themeStories.Count);
             return themeStories[randomIndex];
@@ -123,6 +148,12 @@ namespace MadLibsGame
         {
             var userInputs = new List<string>();
             var placeholders = story["placeholders"];
+
+            // Ensure placeholders is not null
+            if (placeholders == null)
+            {
+                throw new Exception("No placeholders found in the story.");
+            }
 
             foreach (var placeholder in placeholders)
             {
@@ -157,7 +188,7 @@ namespace MadLibsGame
                                            .Insert(index, $"\u001b[32m{userInputs[i]}\u001b[0m"); // Insert the user input
                 }
             }
-            
+
             // Format the story to fit within the specified width
             return FormatStory(finalStory, 60);
         }
@@ -177,7 +208,7 @@ namespace MadLibsGame
                 }
                 currentLine.Append(word + " ");
             }
-            
+
             // Append any remaining words
             if (currentLine.Length > 0)
             {
