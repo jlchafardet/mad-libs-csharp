@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "ZPTgUutHV0w=",
+  "dgSpecHash": "Dv3Zyl8kwNI=",
   "success": true,
   "projectFilePath": "C:\\Users\\Josefo\\OneDrive\\Projects\\csharp\\mad-libs\\mad-libs.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Josefo\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
   "logs": []
 }

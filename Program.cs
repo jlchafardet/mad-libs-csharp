@@ -37,9 +37,9 @@ namespace MadLibsGame
         static void DisplayTitle(string title)
         {
             Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine(new string('═', 60));
-            Console.WriteLine(title.PadLeft((60 + title.Length) / 2).PadRight(60));
-            Console.WriteLine(new string('═', 60));
+            Console.WriteLine("╭" + new string('═', 58) + "╮");
+            Console.WriteLine("│" + title.PadLeft((60 + title.Length) / 2).PadRight(60) + "│");
+            Console.WriteLine("╰" + new string('═', 58) + "╯");
             Console.ResetColor();
         }
 
@@ -47,7 +47,15 @@ namespace MadLibsGame
         {
             // Load and parse the JSON file
             string json = File.ReadAllText(path);
-            return JsonConvert.DeserializeObject<dynamic>(json);
+            var stories = JsonConvert.DeserializeObject<dynamic>(json);
+            
+            // Check if stories is null
+            if (stories == null || stories["themes"] == null)
+            {
+                throw new Exception("Failed to load stories from JSON.");
+            }
+            
+            return stories;
         }
 
         static List<string> DisplayThemes(dynamic stories)
@@ -77,6 +85,11 @@ namespace MadLibsGame
 
         static dynamic SelectRandomStory(dynamic stories, string selectedTheme)
         {
+            if (stories["themes"][selectedTheme] == null)
+            {
+                throw new Exception($"Theme '{selectedTheme}' does not exist.");
+            }
+
             var themeStories = stories["themes"][selectedTheme]["stories"];
             Random random = new Random();
             int randomIndex = random.Next(themeStories.Count);
@@ -112,7 +125,7 @@ namespace MadLibsGame
             string finalStory = string.Join(" ", story["story"]);
             for (int i = 0; i < userInputs.Count; i++)
             {
-                finalStory = finalStory.Replace("___", userInputs[i], 1); // Replace only the first occurrence
+                finalStory = finalStory.Replace("___", userInputs[i], StringComparison.Ordinal); // Use StringComparison
             }
             return finalStory;
         }
