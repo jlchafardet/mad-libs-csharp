@@ -1,4 +1,15 @@
-﻿using System;
+﻿// ============================================================================
+// Author: José Luis Chafardet G.
+// Email: jose.chafardet@icloud.com
+// Github: https://github.com/jlchafardet
+//
+// File Name: Program.cs
+// Description: Main entry point for the Mad Libs Game application.
+// Created: October 11, 2023
+// Last Modified: October 11, 2023
+// ============================================================================
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
@@ -10,7 +21,7 @@ namespace MadLibsGame
         static void Main(string[] args)
         {
             // Handle CTRL+C gracefully
-            Console.CancelKeyPress += new ConsoleCancelEventHandler(OnExit);
+            Console.CancelKeyPress += OnExit;
 
             // Display the title
             DisplayTitle("Mad Libs Game");
@@ -21,12 +32,22 @@ namespace MadLibsGame
             // Display available themes
             var themes = DisplayThemes(stories);
 
-            // Prompt user to select a theme by number
-            Console.Write("Select a theme (enter the number): ");
-            if (!int.TryParse(Console.ReadLine(), out int themeIndex) || themeIndex < 1 || themeIndex > themes.Count)
+            int themeIndex = -1; // Initialize themeIndex to a default value
+            while (true) // Loop until a valid selection is made
             {
-                Console.WriteLine("Invalid selection. Please select a valid theme number.");
-                return; // Exit the program or re-prompt for a valid theme
+                // Prompt user to select a theme by number
+                Console.Write("Select a theme (enter the number): ");
+                string? input = Console.ReadLine(); // Read input as nullable
+
+                // Check if input is null or empty
+                if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out themeIndex) || themeIndex < 1 || themeIndex > themes.Count)
+                {
+                    Console.WriteLine("Invalid selection. Please select a valid theme number.");
+                }
+                else
+                {
+                    break; // Exit the loop if a valid selection is made
+                }
             }
 
             // Add a blank line after theme selection
@@ -59,7 +80,7 @@ namespace MadLibsGame
             Console.ResetColor();
         }
 
-        static void OnExit(object sender, ConsoleCancelEventArgs e)
+        static void OnExit(object? sender, ConsoleCancelEventArgs e)
         {
             // Set the Cancel property to true to prevent the process from terminating.
             e.Cancel = true;
@@ -89,13 +110,10 @@ namespace MadLibsGame
         {
             // Load and parse the JSON file
             string json = File.ReadAllText(path);
-            var stories = JsonConvert.DeserializeObject<dynamic>(json);
+            var stories = JsonConvert.DeserializeObject<dynamic>(json) ?? throw new Exception("Failed to load stories from JSON.");
 
-            // Check if stories or themes are null
-            if (stories == null || stories["themes"] == null)
-            {
-                throw new Exception("Failed to load stories from JSON.");
-            }
+            // Use the null-coalescing operator to ensure themes is not null
+            var themes = stories["themes"] ?? throw new Exception("Themes not found in the loaded stories.");
 
             return stories;
         }
@@ -127,14 +145,10 @@ namespace MadLibsGame
 
         static dynamic SelectRandomStory(dynamic stories, string selectedTheme)
         {
-            // Check if the selected theme exists in the stories
-            if (stories["themes"] == null || stories["themes"][selectedTheme] == null)
-            {
-                throw new Exception($"Theme '{selectedTheme}' does not exist.");
-            }
+            // Use the null-coalescing operator to ensure the selected theme exists
+            var themeStories = stories["themes"]?[selectedTheme]?["stories"] ?? throw new Exception($"No stories found for theme '{selectedTheme}'.");
 
-            var themeStories = stories["themes"][selectedTheme]["stories"];
-            if (themeStories == null || themeStories.Count == 0)
+            if (themeStories.Count == 0)
             {
                 throw new Exception($"No stories found for theme '{selectedTheme}'.");
             }
@@ -147,28 +161,24 @@ namespace MadLibsGame
         static List<string> CollectUserInputs(dynamic story)
         {
             var userInputs = new List<string>();
-            var placeholders = story["placeholders"];
-
-            // Ensure placeholders is not null
-            if (placeholders == null)
-            {
-                throw new Exception("No placeholders found in the story.");
-            }
+            var placeholders = story["placeholders"] ?? throw new Exception("No placeholders found in the story.");
 
             foreach (var placeholder in placeholders)
             {
-                Console.Write($"{placeholder["prompt"]}: ");
-                string input = Console.ReadLine();
+                var prompt = placeholder["prompt"] ?? throw new Exception("Placeholder prompt is null.");
+
+                Console.Write($"{prompt}: ");
+                string? input = Console.ReadLine(); // Declare input as nullable
 
                 // Strict validation: re-prompt if input is empty
                 while (string.IsNullOrWhiteSpace(input))
                 {
                     Console.WriteLine("Input cannot be empty. Please try again.");
-                    Console.Write($"{placeholder["prompt"]}: ");
-                    input = Console.ReadLine();
+                    Console.Write($"{prompt}: ");
+                    input = Console.ReadLine(); // Still nullable
                 }
 
-                userInputs.Add(input);
+                userInputs.Add(input!); // Use the null-forgiving operator when adding to the list
             }
 
             return userInputs;
@@ -176,7 +186,10 @@ namespace MadLibsGame
 
         static string GenerateStory(dynamic story, List<string> userInputs)
         {
-            string finalStory = string.Join(" ", story["story"]);
+            // Ensure the story property is not null
+            var storyContent = story["story"] ?? throw new Exception("Story content is null.");
+            
+            string finalStory = string.Join(" ", storyContent);
             for (int i = 0; i < userInputs.Count; i++)
             {
                 // Find the first occurrence of the placeholder
