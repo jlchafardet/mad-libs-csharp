@@ -18,16 +18,16 @@ namespace MadLibsGame
             // Display available themes
             var themes = DisplayThemes(stories);
 
-            // Prompt user to select a theme
-            Console.Write("Select a theme: ");
-            string selectedTheme = Console.ReadLine();
-
-            // Ensure the selected theme matches the available themes
-            if (!themes.Contains(selectedTheme))
+            // Prompt user to select a theme by number
+            Console.Write("Select a theme (enter the number): ");
+            if (!int.TryParse(Console.ReadLine(), out int themeIndex) || themeIndex < 1 || themeIndex > themes.Count)
             {
-                Console.WriteLine($"Theme '{selectedTheme}' does not exist. Please select a valid theme.");
+                Console.WriteLine("Invalid selection. Please select a valid theme number.");
                 return; // Exit the program or re-prompt for a valid theme
             }
+
+            // Select the theme based on the user's input
+            string selectedTheme = themes[themeIndex - 1]; // Adjust for zero-based index
 
             // Select a random story from the chosen theme
             var story = SelectRandomStory(stories, selectedTheme);
@@ -37,8 +37,17 @@ namespace MadLibsGame
 
             // Generate and display the final story
             string finalStory = GenerateStory(story, userInputs);
-            Console.WriteLine("\nHere is your story:");
-            Console.WriteLine(finalStory);
+
+            // Display the title of the story
+            DisplayTitle(story["title"].ToString());
+            Console.WriteLine(); // Blank line after the title
+            Console.WriteLine(finalStory); // Print the formatted story
+            Console.WriteLine(); // Blank line after the story
+
+            // Exit message
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Hope you had a laugh and enjoyed the mad libs!");
+            Console.ResetColor();
         }
 
         static void DisplayTitle(string title)
@@ -135,7 +144,34 @@ namespace MadLibsGame
             {
                 finalStory = finalStory.Replace("___", userInputs[i], StringComparison.Ordinal); // Use StringComparison
             }
-            return finalStory;
+            
+            // Format the story to fit within the specified width
+            return FormatStory(finalStory, 60);
+        }
+
+        static string FormatStory(string story, int width)
+        {
+            var words = story.Split(' ');
+            var formattedStory = new System.Text.StringBuilder();
+            var currentLine = new System.Text.StringBuilder();
+
+            foreach (var word in words)
+            {
+                if (currentLine.Length + word.Length + 1 > width) // +1 for space
+                {
+                    formattedStory.AppendLine(currentLine.ToString());
+                    currentLine.Clear();
+                }
+                currentLine.Append(word + " ");
+            }
+            
+            // Append any remaining words
+            if (currentLine.Length > 0)
+            {
+                formattedStory.AppendLine(currentLine.ToString());
+            }
+
+            return formattedStory.ToString();
         }
     }
 }
