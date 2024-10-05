@@ -26,6 +26,9 @@ namespace MadLibsGame
                 return; // Exit the program or re-prompt for a valid theme
             }
 
+            // Add a blank line after theme selection
+            Console.WriteLine();
+
             // Select the theme based on the user's input
             string selectedTheme = themes[themeIndex - 1]; // Adjust for zero-based index
 
@@ -34,6 +37,9 @@ namespace MadLibsGame
 
             // Collect user inputs for placeholders
             var userInputs = CollectUserInputs(story);
+
+            // Add a blank line before displaying the title of the story
+            Console.WriteLine();
 
             // Generate and display the final story
             string finalStory = GenerateStory(story, userInputs);
@@ -142,7 +148,14 @@ namespace MadLibsGame
             string finalStory = string.Join(" ", story["story"]);
             for (int i = 0; i < userInputs.Count; i++)
             {
-                finalStory = finalStory.Replace("___", userInputs[i], StringComparison.Ordinal); // Use StringComparison
+                // Find the first occurrence of the placeholder
+                int index = finalStory.IndexOf("___");
+                if (index != -1)
+                {
+                    // Replace it with the user input in green
+                    finalStory = finalStory.Remove(index, 3) // Remove the placeholder
+                                           .Insert(index, $"\u001b[32m{userInputs[i]}\u001b[0m"); // Insert the user input
+                }
             }
             
             // Format the story to fit within the specified width
